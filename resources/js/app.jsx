@@ -7,6 +7,7 @@ import App from './components/App';
 import Login from './components/Login';
 import Register from './components/Register';
 import Shelf from './components/Shelf';
+import BookDetail from './components/BookDetail';
 
 const container = document.getElementById('app');
 if (container) {
@@ -14,6 +15,7 @@ if (container) {
 
     const path = window.location.pathname;
     let Screen = App;
+    let props = {};
 
     if (path === '/login') {
         Screen = Login;
@@ -21,11 +23,20 @@ if (container) {
         Screen = Register;
     } else if (path === '/estante') {
         Screen = Shelf;
+    } else if (path.startsWith('/livro/')) {
+        Screen = BookDetail;
+        const openlibraryId = path.replace('/livro/', '');
+        props = {
+            openlibraryId,
+            onBack: () => {
+                window.location.href = '/';
+            },
+        };
     }
 
     root.render(
         <React.StrictMode>
-            <Screen />
+            <Screen {...props} />
         </React.StrictMode>
     );
 }

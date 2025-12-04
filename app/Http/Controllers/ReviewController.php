@@ -22,6 +22,121 @@ class ReviewController extends Controller
     }
 
     /**
+     * Retorna as reviews do usuário agrupadas por status para a estante.
+     */
+    public function shelf()
+    {
+        $userId = Auth::id();
+        
+        // Busca todas as reviews do usuário com os livros
+        $reviews = Review::with('book')
+            ->where('user_id', $userId)
+            ->get();
+
+        // Agrupa por status
+        $grouped = [
+            'reading' => [],
+            'read' => [],
+            'want_to_read' => [],
+        ];
+
+        $totalPages = 0;
+        $readCount = 0;
+
+        foreach ($reviews as $review) {
+            if ($review->book) {
+                $bookData = [
+                    'review_id' => $review->id,
+                    'book_id' => $review->book->id,
+                    'openlibrary_id' => $review->book->openlibrary_id,
+                    'title' => $review->book->title,
+                    'authors' => $review->book->authors ?? [],
+                    'cover_url' => $review->book->cover_url,
+                    'page_count' => $review->book->page_count,
+                    'rating' => $review->rating,
+                    'status' => $review->status,
+                    'read_at' => $review->read_at,
+                ];
+
+                if (isset($grouped[$review->status])) {
+                    $grouped[$review->status][] = $bookData;
+                }
+
+                // Estatísticas
+                if ($review->status === 'read') {
+                    $readCount++;
+                    if ($review->book->page_count) {
+                        $totalPages += $review->book->page_count;
+                    }
+                }
+            }
+        }
+
+        // Busca atividades da última semana (criadas ou atualizadas)
+        $oneWeekAgo = now()->subWeek();
+        $recentActivities = Review::with('book')
+            ->where('user_id', $userId)
+            ->where(function ($query) use ($oneWeekAgo) {
+                $query->where('created_at', '>=', $oneWeekAgo)
+                      ->orWhere('updated_at', '>=', $oneWeekAgo);
+            })
+            ->orderBy('updated_at', 'desc')
+            ->limit(10)
+            ->get()
+            ->map(function ($review) {
+                return [
+                    'id' => $review->id,
+                    'book_title' => $review->book->title ?? 'Livro desconhecido',
+                    'book_cover' => $review->book->cover_url ?? null,
+                    'openlibrary_id' => $review->book->openlibrary_id ?? null,
+                    'status' => $review->status,
+                    'rating' => $review->rating,
+                    'action' => $this->getActivityAction($review),
+                    'created_at' => $review->created_at,
+                    'updated_at' => $review->updated_at,
+                ];
+            })
+            ->toArray();
+
+        // Busca última atividade geral (para mensagem se não houver na semana)
+        $lastActivity = Review::where('user_id', $userId)
+            ->orderBy('updated_at', 'desc')
+            ->first();
+
+        return response()->json([
+            'reading' => $grouped['reading'],
+            'read' => $grouped['read'],
+            'want_to_read' => $grouped['want_to_read'],
+            'stats' => [
+                'read_count' => $readCount,
+                'total_pages' => $totalPages,
+            ],
+            'recent_activities' => $recentActivities,
+            'last_activity_date' => $lastActivity ? $lastActivity->updated_at : null,
+        ]);
+    }
+
+    /**
+     * Retorna a ação descritiva da atividade.
+     */
+    private function getActivityAction($review)
+    {
+        $actions = [
+            'read' => 'finalizou a leitura',
+            'reading' => 'começou a ler',
+            'want_to_read' => 'adicionou à lista',
+        ];
+
+        $action = $actions[$review->status] ?? 'atualizou';
+
+        if ($review->rating) {
+            $action .= ' e avaliou com ' . $review->rating . ' estrelas';
+        }
+
+        return $action;
+    }
+
+    /**
      * Store a newly created resource in storage.
      * Usa firstOrCreate para o livro e updateOrCreate para a review.
      */
