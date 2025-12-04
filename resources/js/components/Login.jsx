@@ -1,10 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Mail, Loader2, CheckCircle2, AlertCircle, BookOpen } from 'lucide-react';
 
 function Login() {
     const [email, setEmail] = useState('');
     const [status, setStatus] = useState('idle'); // idle | loading | success | error
     const [message, setMessage] = useState('');
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            try {
+                const response = await fetch('/api/me', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'include',
+                });
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+                setCurrentUser(data.user ?? null);
+            } catch (error) {
+                console.error('Erro ao buscar usuário logado:', error);
+            }
+        };
+
+        fetchCurrentUser();
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -60,6 +83,14 @@ function Login() {
                     <a href="/estante" className="hover:text-amber-500 transition-colors">
                         Minha Estante
                     </a>
+                    {currentUser ? (
+                        <div className="px-4 py-2 bg-[#292524] text-[#e7e5e4] rounded border border-[#44403c] flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-sm text-[#e7e5e4] font-semibold">
+                                {currentUser.name}
+                            </span>
+                        </div>
+                    ) : null}
                 </div>
             </nav>
 

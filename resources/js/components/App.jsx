@@ -44,7 +44,6 @@ function App() {
                     {currentUser ? (
                         <div className="px-4 py-2 bg-[#292524] text-[#e7e5e4] rounded border border-[#44403c] flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-xs uppercase tracking-widest text-[#a8a29e]">Logado</span>
                             <span className="text-sm text-[#e7e5e4] font-semibold">
                                 {currentUser.name}
                             </span>

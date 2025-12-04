@@ -1,101 +1,190 @@
-import React from 'react';
-import { BookOpen, BookMarked, BookOpenCheck, Bookmark, BookOpenText } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BookOpen, BookCheck, Bookmark, BookOpenText, Library, TrendingUp, Calendar } from 'lucide-react';
 
 function Shelf() {
+    const [currentUser, setCurrentUser] = useState(null);
+
+    useEffect(() => {
+        const fetchCurrentUser = async () => {
+            try {
+                const response = await fetch('/api/me', {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'include',
+                });
+
+                if (!response.ok) return;
+
+                const data = await response.json();
+                setCurrentUser(data.user ?? null);
+            } catch (error) {
+                console.error('Erro ao buscar usuário logado:', error);
+            }
+        };
+
+        fetchCurrentUser();
+    }, []);
+
     return (
         <div className="min-h-screen bg-[#1c1917] text-[#e7e5e4] font-sans selection:bg-[#d6d3d1] selection:text-[#1c1917] flex flex-col">
-            {/* Navbar */}
-            <nav className="w-full p-6 flex justify-between items-center border-b border-[#44403c] bg-[#1c1917]/95 sticky top-0 z-50 backdrop-blur-sm">
-                <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity cursor-pointer">
-                    <BookOpen className="w-6 h-6 text-amber-600" />
+            {/* Navbar (Consistente com a Home) */}
+            <nav className="w-full p-6 flex justify-between items-center border-b border-[#292524] bg-[#1c1917]/95 sticky top-0 z-50 backdrop-blur-sm">
+                <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity group">
+                    <div className="p-2 bg-[#292524] rounded-lg group-hover:bg-[#44403c] transition-colors">
+                        <BookOpen className="w-5 h-5 text-amber-600" />
+                    </div>
                     <span className="text-xl font-serif tracking-wider text-[#e7e5e4]">AvaLivros</span>
                 </a>
+                
+                {/* User Menu */}
+                <div className="flex items-center gap-4">
+                    {currentUser ? (
+                        <div className="px-4 py-2 bg-[#292524] text-[#e7e5e4] rounded border border-[#44403c] flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                            <span className="text-sm text-[#e7e5e4] font-semibold">
+                                {currentUser.name}
+                            </span>
+                        </div>
+                    ) : (
+                        <a
+                            href="/login"
+                            className="px-4 py-2 bg-[#292524] text-[#e7e5e4] rounded hover:bg-[#44403c] transition-colors border border-[#44403c]"
+                        >
+                            Entrar
+                        </a>
+                    )}
+                </div>
             </nav>
 
             {/* Conteúdo principal */}
-            <main className="flex-1 container mx-auto px-4 py-10 md:py-16">
-                <header className="mb-10 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-                    <div>
-                        <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#292524] border border-[#44403c] text-amber-500 text-xs tracking-widest uppercase mb-4">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span>Sua biblioteca pessoal</span>
-                        </p>
-                        <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#e7e5e4]">
-                            Minha Estante
-                        </h1>
-                        <p className="mt-2 text-sm text-[#a8a29e] max-w-xl">
-                            Aqui é onde vivem os livros que você já leu, está lendo e ainda quer descobrir. Em breve,
-                            você poderá ver suas avaliações, resenhas e progresso detalhado.
-                        </p>
+            <main className="flex-1 container mx-auto px-4 py-10 md:py-12 max-w-6xl">
+                
+                {/* Header Section */}
+                <header className="mb-12">
+                    <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 pb-8 border-b border-[#292524]">
+                        <div>
+                            <div className="flex items-center gap-2 text-amber-600 mb-2">
+                                <Library className="w-4 h-4" />
+                                <span className="text-xs font-bold tracking-[0.2em] uppercase">Biblioteca Pessoal</span>
+                            </div>
+                            <h1 className="text-4xl md:text-5xl font-serif font-bold text-[#e7e5e4] mb-4">
+                                Minha Estante
+                            </h1>
+                            <p className="text-[#a8a29e] max-w-2xl text-lg font-light leading-relaxed">
+                                O registro da sua jornada. Acompanhe seu progresso, revisite memórias e planeje suas próximas aventuras literárias.
+                            </p>
+                        </div>
+                        
+                        {/* Mini Stats Dashboard */}
+                        <div className="flex gap-8 bg-[#0c0a09] p-4 rounded-xl border border-[#292524] shadow-inner">
+                            <div className="text-center px-4">
+                                <div className="text-2xl font-serif font-bold text-[#e7e5e4]">0</div>
+                                <div className="text-[10px] uppercase tracking-wider text-[#57534e]">Livros Lidos</div>
+                            </div>
+                            <div className="w-px bg-[#292524]"></div>
+                            <div className="text-center px-4">
+                                <div className="text-2xl font-serif font-bold text-[#e7e5e4]">0</div>
+                                <div className="text-[10px] uppercase tracking-wider text-[#57534e]">Páginas Totais</div>
+                            </div>
+                        </div>
                     </div>
                 </header>
 
-                <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {/* Lendo */}
-                    <div className="bg-[#0c0a09] border border-[#292524] rounded-2xl p-6 shadow-lg flex flex-col">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-[#292524] flex items-center justify-center text-sky-400">
-                                <BookOpenText className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-serif font-semibold text-[#e7e5e4]">Lendo agora</h2>
-                                <p className="text-xs uppercase tracking-widest text-[#78716c]">Sessão em andamento</p>
-                            </div>
-                        </div>
-                        <p className="text-sm text-[#a8a29e] flex-1">
-                            Em breve, os livros que você marcar como <span className="text-sky-300">“Lendo”</span> vão
-                            aparecer aqui, com seu progresso e últimas notas.
-                        </p>
-                        <div className="mt-6 text-xs text-[#57534e]">
-                            Nenhum livro marcado como <span className="text-sky-300">Lendo</span> ainda.
-                        </div>
-                    </div>
+                {/* Grid das Prateleiras */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
+                    
+                    {/* Card: Lendo Agora */}
+                    <ShelfCard 
+                        icon={<BookOpenText className="w-6 h-6" />}
+                        title="Lendo Agora"
+                        colorClass="text-sky-400"
+                        bgClass="bg-sky-500/10"
+                        borderClass="hover:border-sky-500/30"
+                        description="Livros que estão na sua cabeceira."
+                        emptyText="Você não está lendo nada no momento."
+                        actionText="Adicionar leitura atual"
+                    />
 
-                    {/* Lidos */}
-                    <div className="bg-[#0c0a09] border border-[#292524] rounded-2xl p-6 shadow-lg flex flex-col">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-[#292524] flex items-center justify-center text-emerald-400">
-                                <BookOpenCheck className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-serif font-semibold text-[#e7e5e4]">Lidos</h2>
-                                <p className="text-xs uppercase tracking-widest text-[#78716c]">Memórias registradas</p>
-                            </div>
-                        </div>
-                        <p className="text-sm text-[#a8a29e] flex-1">
-                            Aqui ficará o histórico dos livros que você já terminou, com suas{' '}
-                            <span className="text-emerald-300">notas</span> e <span className="text-emerald-300">reviews</span>.
-                        </p>
-                        <div className="mt-6 text-xs text-[#57534e]">
-                            Nenhum livro marcado como <span className="text-emerald-300">Lido</span> ainda.
-                        </div>
-                    </div>
+                    {/* Card: Lidos */}
+                    <ShelfCard 
+                        icon={<BookCheck className="w-6 h-6" />}
+                        title="Lidos"
+                        colorClass="text-emerald-400"
+                        bgClass="bg-emerald-500/10"
+                        borderClass="hover:border-emerald-500/30"
+                        description="Sua coleção de conquistas e resenhas."
+                        emptyText="Nenhum livro finalizado ainda."
+                        actionText="Registrar livro lido"
+                    />
 
-                    {/* Quero ler / Wishlist */}
-                    <div className="bg-[#0c0a09] border border-[#292524] rounded-2xl p-6 shadow-lg flex flex-col">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-10 h-10 rounded-xl bg-[#292524] flex items-center justify-center text-amber-400">
-                                <Bookmark className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <h2 className="text-lg font-serif font-semibold text-[#e7e5e4]">Quero ler</h2>
-                                <p className="text-xs uppercase tracking-widest text-[#78716c]">Lista de desejos</p>
-                            </div>
-                        </div>
-                        <p className="text-sm text-[#a8a29e] flex-1">
-                            Salve aqui os livros que você ainda não começou, mas não quer esquecer. Sua lista de
-                            <span className="text-amber-300"> “Quero ler”</span> vai nascer neste espaço.
-                        </p>
-                        <div className="mt-6 text-xs text-[#57534e]">
-                            Nenhum livro marcado como <span className="text-amber-300">Quero ler</span> ainda.
-                        </div>
+                    {/* Card: Quero Ler */}
+                    <ShelfCard 
+                        icon={<Bookmark className="w-6 h-6" />}
+                        title="Quero Ler"
+                        colorClass="text-amber-400"
+                        bgClass="bg-amber-500/10"
+                        borderClass="hover:border-amber-500/30"
+                        description="Sua lista de desejos para o futuro."
+                        emptyText="Sua lista está vazia."
+                        actionText="Explorar novos títulos"
+                    />
+
+                </div>
+
+                {/* Seção 'Recentemente Adicionados' ou Placeholder */}
+                <div className="mt-16 pt-10 border-t border-[#292524]">
+                    <div className="flex items-center gap-2 mb-6 text-[#78716c]">
+                        <TrendingUp className="w-4 h-4" />
+                        <h3 className="text-sm font-semibold uppercase tracking-widest">Atividade Recente</h3>
                     </div>
-                </section>
+                    
+                    {/* Empty State da Timeline */}
+                    <div className="bg-[#0c0a09] border border-[#292524] border-dashed rounded-xl p-12 flex flex-col items-center justify-center text-center group hover:border-[#44403c] transition-colors cursor-pointer">
+                        <div className="w-16 h-16 bg-[#1c1917] rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-lg shadow-[#000000]/20">
+                            <Calendar className="w-6 h-6 text-[#44403c] group-hover:text-[#57534e] transition-colors" />
+                        </div>
+                        <p className="text-[#a8a29e] mb-2 font-serif text-lg">Tudo quieto por aqui...</p>
+                        <p className="text-[#57534e] text-sm">Suas avaliações e atualizações de leitura aparecerão nesta linha do tempo.</p>
+                    </div>
+                </div>
+
             </main>
         </div>
     );
 }
 
+// Componente auxiliar para os Cards
+function ShelfCard({ icon, title, colorClass, bgClass, borderClass, description, emptyText, actionText }) {
+    return (
+        <div className={`bg-[#0c0a09] border border-[#292524] rounded-xl p-6 flex flex-col h-full transition-all duration-300 group ${borderClass} hover:shadow-xl hover:shadow-[#000000]/50 hover:-translate-y-1`}>
+            <div className="flex items-center justify-between mb-6">
+                <div className={`w-12 h-12 rounded-lg ${bgClass} flex items-center justify-center ${colorClass} group-hover:scale-110 transition-transform duration-300`}>
+                    {icon}
+                </div>
+                {/* Botão sutil de + */}
+                <div className="w-8 h-8 rounded-full flex items-center justify-center text-[#44403c] group-hover:text-[#a8a29e] group-hover:bg-[#1c1917] transition-all">
+                    <span className="text-xl leading-none pb-1">+</span>
+                </div>
+            </div>
+            
+            <h2 className="text-xl font-serif font-bold text-[#e7e5e4] mb-2 group-hover:text-white transition-colors">
+                {title}
+            </h2>
+            <p className="text-[#78716c] text-sm mb-6 leading-relaxed">
+                {description}
+            </p>
+
+            <div className="mt-auto pt-6 border-t border-[#1c1917]">
+                <div className="text-center py-8 bg-[#1c1917]/30 rounded border border-dashed border-[#292524] group-hover:border-[#44403c] transition-colors">
+                    <p className="text-[#57534e] text-sm mb-3">{emptyText}</p>
+                    <span className={`text-xs font-bold ${colorClass} opacity-60 hover:opacity-100 cursor-pointer uppercase tracking-widest transition-opacity border-b border-transparent hover:border-current pb-0.5`}>
+                        {actionText}
+                    </span>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default Shelf;
-
-
