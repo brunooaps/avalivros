@@ -460,9 +460,18 @@ function BookDetail({ openlibraryId, onBack }) {
                                                     {review.user?.name?.charAt(0).toUpperCase() || '?'}
                                                 </div>
                                                 <div>
-                                                    <p className="font-serif font-semibold text-[#e7e5e4]">
-                                                        {review.user?.name || 'Usuário anônimo'}
-                                                    </p>
+                                                    {review.user?.username ? (
+                                                        <a
+                                                            href={`/usuario/${review.user.username}`}
+                                                            className="font-serif font-semibold text-[#e7e5e4] hover:text-amber-500 transition-colors cursor-pointer"
+                                                        >
+                                                            {review.user.name || 'Usuário anônimo'}
+                                                        </a>
+                                                    ) : (
+                                                        <p className="font-serif font-semibold text-[#e7e5e4]">
+                                                            {review.user?.name || 'Usuário anônimo'}
+                                                        </p>
+                                                    )}
                                                     <p className="text-xs text-[#57534e]">
                                                         {new Date(review.created_at).toLocaleDateString('pt-BR', {
                                                             day: 'numeric',

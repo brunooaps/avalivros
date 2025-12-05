@@ -254,8 +254,23 @@ class BookController extends Controller
         $reviews = $query->orderBy('created_at', 'desc')
             ->paginate($perPage, ['*'], 'page', $page);
 
+        // Formata as reviews para incluir username
+        $formattedReviews = collect($reviews->items())->map(function ($review) {
+            return [
+                'id' => $review->id,
+                'rating' => $review->rating,
+                'review_text' => $review->review_text,
+                'created_at' => $review->created_at,
+                'user' => [
+                    'id' => $review->user->id,
+                    'name' => $review->user->name,
+                    'username' => $review->user->username,
+                ],
+            ];
+        })->toArray();
+
         return response()->json([
-            'reviews' => $reviews->items(),
+            'reviews' => $formattedReviews,
             'pagination' => [
                 'current_page' => $reviews->currentPage(),
                 'last_page' => $reviews->lastPage(),

@@ -8,6 +8,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import Shelf from './components/Shelf';
 import BookDetail from './components/BookDetail';
+import UserProfile from './components/UserProfile';
 
 const container = document.getElementById('app');
 if (container) {
@@ -28,6 +29,15 @@ if (container) {
         const openlibraryId = path.replace('/livro/', '');
         props = {
             openlibraryId,
+            onBack: () => {
+                window.location.href = '/';
+            },
+        };
+    } else if (path.startsWith('/usuario/')) {
+        Screen = UserProfile;
+        const username = path.replace('/usuario/', '');
+        props = {
+            username,
             onBack: () => {
                 window.location.href = '/';
             },

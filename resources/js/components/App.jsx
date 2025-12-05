@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { BookOpen, Search, Star, Feather, Book, Coffee, Bookmark } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { BookOpen, Search, Star, Feather, Book, Coffee, Bookmark, LogOut, User as UserIcon } from 'lucide-react';
 import SearchResults from './SearchResults';
 
 function App() {
@@ -7,6 +7,8 @@ function App() {
     const [currentUser, setCurrentUser] = useState(null);
     const [searchResults, setSearchResults] = useState(null);
     const [searchLoading, setSearchLoading] = useState(false);
+    const [showUserMenu, setShowUserMenu] = useState(false);
+    const userMenuRef = useRef(null);
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
@@ -30,6 +32,39 @@ function App() {
 
         fetchCurrentUser();
     }, []);
+
+    // Fecha o menu ao clicar fora
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+                setShowUserMenu(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    const handleLogout = async () => {
+        try {
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            await fetch('/api/logout', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(token ? { 'X-CSRF-TOKEN': token } : {}),
+                },
+                credentials: 'include',
+            });
+            window.location.href = '/';
+        } catch (error) {
+            console.error('Erro ao fazer logout:', error);
+            // Mesmo com erro, redireciona para home
+            window.location.href = '/';
+        }
+    };
 
     const handleSearch = async () => {
         if (!searchTerm.trim()) return;
@@ -116,11 +151,35 @@ function App() {
                 <div className="flex gap-6 text-sm font-medium text-[#a8a29e]">
                     <button className="hover:text-amber-500 transition-colors" onClick={() => window.location.href = '/estante'}>Minha Estante</button>
                     {currentUser ? (
-                        <div className="px-4 py-2 bg-[#292524] text-[#e7e5e4] rounded border border-[#44403c] flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                            <span className="text-sm text-[#e7e5e4] font-semibold">
-                                {currentUser.name}
-                            </span>
+                        <div className="relative" ref={userMenuRef}>
+                            <button
+                                onClick={() => setShowUserMenu(!showUserMenu)}
+                                className="px-4 py-2 bg-[#292524] text-[#e7e5e4] rounded border border-[#44403c] flex items-center gap-2 hover:bg-[#44403c] transition-colors"
+                            >
+                                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                <span className="text-sm text-[#e7e5e4] font-semibold">
+                                    {currentUser.name}
+                                </span>
+                            </button>
+                            {showUserMenu && (
+                                <div className="absolute right-0 mt-2 w-48 bg-[#0c0a09] border border-[#292524] rounded-lg shadow-xl z-50 overflow-hidden">
+                                    <a
+                                        href={currentUser.username ? `/usuario/${currentUser.username}` : '#'}
+                                        className="flex items-center gap-3 px-4 py-3 text-[#e7e5e4] hover:bg-[#1c1917] transition-colors"
+                                        onClick={() => setShowUserMenu(false)}
+                                    >
+                                        <UserIcon className="w-4 h-4" />
+                                        <span className="text-sm">Meu Perfil</span>
+                                    </a>
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full flex items-center gap-3 px-4 py-3 text-[#e7e5e4] hover:bg-[#1c1917] transition-colors text-left"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        <span className="text-sm">Sair</span>
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <a
