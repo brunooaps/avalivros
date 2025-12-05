@@ -19,6 +19,16 @@ function BookDetail({ openlibraryId, onBack }) {
     
     // Rating interaction state
     const [hoveredRating, setHoveredRating] = useState(0);
+    
+    // Other users' reviews
+    const [otherReviews, setOtherReviews] = useState([]);
+    const [reviewsLoading, setReviewsLoading] = useState(false);
+    const [reviewsPagination, setReviewsPagination] = useState({
+        current_page: 1,
+        last_page: 1,
+        per_page: 10,
+        total: 0,
+    });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -44,6 +54,9 @@ function BookDetail({ openlibraryId, onBack }) {
                     setRating(Number(bookData.user_review.rating) || 0); // Garante número
                     setReviewText(bookData.user_review.review_text || '');
                 }
+                
+                // Busca reviews de outros usuários
+                fetchOtherReviews(1);
             } catch (error) {
                 console.error('Erro ao carregar dados:', error);
             } finally {
@@ -53,6 +66,33 @@ function BookDetail({ openlibraryId, onBack }) {
 
         fetchData();
     }, [openlibraryId]);
+
+    const fetchOtherReviews = async (page = 1) => {
+        setReviewsLoading(true);
+        try {
+            const response = await fetch(`/api/books/openlibrary/${openlibraryId}/reviews?page=${page}&per_page=10`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'include',
+            });
+
+            if (!response.ok) return;
+
+            const data = await response.json();
+            setOtherReviews(data.reviews || []);
+            setReviewsPagination(data.pagination || {
+                current_page: 1,
+                last_page: 1,
+                per_page: 10,
+                total: 0,
+            });
+        } catch (error) {
+            console.error('Erro ao buscar reviews:', error);
+        } finally {
+            setReviewsLoading(false);
+        }
+    };
 
     const handleSaveReview = async () => {
         if (!currentUser) {
@@ -382,6 +422,107 @@ function BookDetail({ openlibraryId, onBack }) {
                             </div>
                         )}
                     </div>
+                </div>
+
+                {/* Reviews de Outros Usuários */}
+                <div className="mt-16 pt-10 border-t border-[#292524]">
+                    <h3 className="text-2xl font-serif font-bold text-[#e7e5e4] mb-6 flex items-center gap-2">
+                        <FileText className="w-6 h-6 text-amber-700" />
+                        Reviews da Comunidade
+                        {reviewsPagination.total > 0 && (
+                            <span className="text-sm font-normal text-[#78716c] ml-2">
+                                ({reviewsPagination.total})
+                            </span>
+                        )}
+                    </h3>
+
+                    {reviewsLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <Loader2 className="w-6 h-6 text-amber-700 animate-spin" />
+                        </div>
+                    ) : otherReviews.length === 0 ? (
+                        <div className="bg-[#0c0a09] border border-[#292524] border-dashed rounded-xl p-12 text-center">
+                            <FileText className="w-12 h-12 text-[#44403c] mx-auto mb-4" />
+                            <p className="text-[#a8a29e] font-serif">Ainda não há reviews da comunidade para este livro.</p>
+                            <p className="text-[#57534e] text-sm mt-2">Seja o primeiro a compartilhar suas impressões!</p>
+                        </div>
+                    ) : (
+                        <>
+                            <div className="space-y-6">
+                                {otherReviews.map((review) => (
+                                    <div
+                                        key={review.id}
+                                        className="bg-[#0c0a09] border border-[#292524] rounded-xl p-6 hover:border-[#44403c] transition-colors"
+                                    >
+                                        <div className="flex items-start justify-between mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center text-[#1c1917] font-bold text-sm">
+                                                    {review.user?.name?.charAt(0).toUpperCase() || '?'}
+                                                </div>
+                                                <div>
+                                                    <p className="font-serif font-semibold text-[#e7e5e4]">
+                                                        {review.user?.name || 'Usuário anônimo'}
+                                                    </p>
+                                                    <p className="text-xs text-[#57534e]">
+                                                        {new Date(review.created_at).toLocaleDateString('pt-BR', {
+                                                            day: 'numeric',
+                                                            month: 'long',
+                                                            year: 'numeric',
+                                                        })}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            {review.rating && (
+                                                <div className="flex items-center gap-1">
+                                                    {[1, 2, 3, 4, 5].map((star) => (
+                                                        <Star
+                                                            key={star}
+                                                            className={`w-4 h-4 ${
+                                                                star <= review.rating
+                                                                    ? 'text-amber-500 fill-amber-500'
+                                                                    : 'text-[#44403c]'
+                                                            }`}
+                                                        />
+                                                    ))}
+                                                    <span className="ml-2 text-sm text-[#78716c]">
+                                                        {review.rating}/5
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        {review.review_text && (
+                                            <p className="text-[#a8a29e] leading-relaxed whitespace-pre-wrap font-serif">
+                                                {review.review_text}
+                                            </p>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Paginação */}
+                            {reviewsPagination.last_page > 1 && (
+                                <div className="flex items-center justify-center gap-2 mt-8">
+                                    <button
+                                        onClick={() => fetchOtherReviews(reviewsPagination.current_page - 1)}
+                                        disabled={reviewsPagination.current_page === 1}
+                                        className="px-4 py-2 bg-[#292524] text-[#e7e5e4] rounded hover:bg-[#44403c] transition-colors border border-[#44403c] disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Anterior
+                                    </button>
+                                    <span className="text-sm text-[#78716c] px-4">
+                                        Página {reviewsPagination.current_page} de {reviewsPagination.last_page}
+                                    </span>
+                                    <button
+                                        onClick={() => fetchOtherReviews(reviewsPagination.current_page + 1)}
+                                        disabled={reviewsPagination.current_page === reviewsPagination.last_page}
+                                        className="px-4 py-2 bg-[#292524] text-[#e7e5e4] rounded hover:bg-[#44403c] transition-colors border border-[#44403c] disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        Próxima
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
             </main>
         </div>

@@ -5,26 +5,27 @@ namespace App\Http\Controllers;
 use App\Models\Book;
 use App\Models\Review;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class BookController extends Controller
 {
     /**
      * Search books in OpenLibrary API
+     * Usa busca geral (q=) com ordenação por número de edições (sort=editions)
+     * para priorizar clássicos e livros populares sobre manuais obscuros
      */
     public function search(Request $request)
     {
         $request->validate([
             'q' => 'required|string|min:2',
-            'type' => 'nullable|in:title,author',
         ]);
 
         $query = $request->input('q');
-        $type = $request->input('type', 'title'); // padrão é 'title'
         
-        // Constrói a URL baseado no tipo de busca
-        $searchParam = $type === 'author' ? 'author' : 'title';
-        $url = "https://openlibrary.org/search.json?{$searchParam}=" . urlencode($query) . "&limit=30";
+        // Usa busca geral (q=) com ordenação por edições para filtrar resultados relevantes
+        $url = "https://openlibrary.org/search.json?q=" . urlencode($query) . "&sort=editions&limit=30";
 
         try {
             $response = Http::get($url);
@@ -213,15 +214,54 @@ class BookController extends Controller
 
         // Busca review do usuário autenticado se existir
         $userReview = null;
-        if (auth()->check()) {
+        if (Auth::check()) {
             $userReview = Review::where('book_id', $book->id)
-                ->where('user_id', auth()->id())
+                ->where('user_id', Auth::id())
                 ->first();
         }
-
+        Log::info('BookController@getByOpenLibraryId', ['book' => $book, 'userReview' => $userReview]);
         return response()->json([
             'book' => $book,
             'user_review' => $userReview,
+        ]);
+    }
+
+    /**
+     * Busca todas as reviews de um livro específico (com paginação).
+     * Inclui reviews com texto ou com rating.
+     */
+    public function getBookReviews(Request $request, string $openlibraryId)
+    {
+        $book = Book::where('openlibrary_id', $openlibraryId)->first();
+
+        if (!$book) {
+            return response()->json(['error' => 'Livro não encontrado'], 404);
+        }
+
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+
+        // Busca TODAS as reviews do livro (incluindo a do usuário logado)
+        // Inclui reviews com texto OU com rating
+        $query = Review::with('user')
+            ->where('book_id', $book->id)
+            ->where(function ($q) {
+                $q->whereNotNull('review_text')
+                  ->where('review_text', '!=', '')
+                  ->orWhereNotNull('rating');
+            });
+
+        $reviews = $query->orderBy('created_at', 'desc')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        return response()->json([
+            'reviews' => $reviews->items(),
+            'pagination' => [
+                'current_page' => $reviews->currentPage(),
+                'last_page' => $reviews->lastPage(),
+                'per_page' => $reviews->perPage(),
+                'total' => $reviews->total(),
+            ],
         ]);
     }
 

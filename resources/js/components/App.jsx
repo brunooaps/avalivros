@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Search, Star, Feather, Book, Coffee, Bookmark, User } from 'lucide-react';
+import { BookOpen, Search, Star, Feather, Book, Coffee, Bookmark } from 'lucide-react';
 import SearchResults from './SearchResults';
 
 function App() {
     const [searchTerm, setSearchTerm] = useState('');
-    const [searchType, setSearchType] = useState('title'); // 'title' ou 'author'
     const [currentUser, setCurrentUser] = useState(null);
     const [searchResults, setSearchResults] = useState(null);
     const [searchLoading, setSearchLoading] = useState(false);
@@ -37,7 +36,7 @@ function App() {
 
         setSearchLoading(true);
         try {
-            const response = await fetch(`/api/books/search?q=${encodeURIComponent(searchTerm)}&type=${searchType}`, {
+            const response = await fetch(`/api/books/search?q=${encodeURIComponent(searchTerm)}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                 },
@@ -70,7 +69,7 @@ function App() {
         setSearchTerm(newSearchTerm);
         setSearchLoading(true);
         try {
-            const response = await fetch(`/api/books/search?q=${encodeURIComponent(newSearchTerm)}&type=${searchType}`, {
+            const response = await fetch(`/api/books/search?q=${encodeURIComponent(newSearchTerm)}`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
                 },
@@ -95,13 +94,11 @@ function App() {
         return (
             <SearchResults
                 searchTerm={searchTerm}
-                searchType={searchType}
                 results={searchResults}
                 loading={searchLoading}
                 onBookClick={handleBookClick}
                 onBack={handleBackFromSearch}
                 onSearch={handleSearchFromResults}
-                onSearchTypeChange={setSearchType}
             />
         );
     }
@@ -118,7 +115,6 @@ function App() {
                 </div>
                 <div className="flex gap-6 text-sm font-medium text-[#a8a29e]">
                     <button className="hover:text-amber-500 transition-colors" onClick={() => window.location.href = '/estante'}>Minha Estante</button>
-                    <button className="hover:text-amber-500 transition-colors">Diário</button>
                     {currentUser ? (
                         <div className="px-4 py-2 bg-[#292524] text-[#e7e5e4] rounded border border-[#44403c] flex items-center gap-2">
                             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -155,39 +151,12 @@ function App() {
                 <div className="w-full max-w-2xl relative group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
                     <div className="relative flex items-center bg-[#f5f5f4] rounded-lg shadow-2xl overflow-hidden p-1">
-                        {/* Seletor de tipo de busca */}
-                        <div className="flex items-center gap-1 px-2 border-r border-[#d6d3d1]">
-                            <button
-                                onClick={() => setSearchType('title')}
-                                className={`px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-1 ${
-                                    searchType === 'title'
-                                        ? 'bg-[#1c1917] text-[#e7e5e4]'
-                                        : 'text-[#78716c] hover:text-[#1c1917]'
-                                }`}
-                                title="Buscar por título"
-                            >
-                                <BookOpen className="w-3 h-3" />
-                                <span>Título</span>
-                            </button>
-                            <button
-                                onClick={() => setSearchType('author')}
-                                className={`px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-1 ${
-                                    searchType === 'author'
-                                        ? 'bg-[#1c1917] text-[#e7e5e4]'
-                                        : 'text-[#78716c] hover:text-[#1c1917]'
-                                }`}
-                                title="Buscar por autor"
-                            >
-                                <User className="w-3 h-3" />
-                                <span>Autor</span>
-                            </button>
-                        </div>
                         <div className="pl-4 text-[#78716c]">
                             <Search className="w-5 h-5" />
                         </div>
                         <input 
                             type="text"
-                            placeholder={searchType === 'title' ? 'Busque por título do livro...' : 'Busque por nome do autor...'}
+                            placeholder="Busque por título, autor ou assunto..."
                             className="w-full p-4 bg-transparent text-[#1c1917] placeholder-[#78716c] focus:outline-none text-lg font-serif"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}

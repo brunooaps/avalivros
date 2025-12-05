@@ -32,6 +32,7 @@ Route::prefix('api')->group(function () {
     Route::get('/books', [BookController::class, 'index']);
     Route::get('/books/{book}', [BookController::class, 'show']);
     Route::get('/books/openlibrary/{openlibraryId}', [BookController::class, 'getByOpenLibraryId']);
+    Route::get('/books/openlibrary/{openlibraryId}/reviews', [BookController::class, 'getBookReviews']);
     
     // Endpoints para login e cadastro com magic link
     Route::post('/magic-link', [MagicLinkController::class, 'sendLoginLink']);

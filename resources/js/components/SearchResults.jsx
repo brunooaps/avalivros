@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { BookOpen, ArrowLeft, Loader2, Search, Star, User } from 'lucide-react';
+import { BookOpen, ArrowLeft, Loader2, Search, Star } from 'lucide-react';
 
-function SearchResults({ searchTerm, searchType, results, loading, onBookClick, onBack, onSearch, onSearchTypeChange }) {
+function SearchResults({ searchTerm, results, loading, onBookClick, onBack, onSearch }) {
     const [newSearchTerm, setNewSearchTerm] = useState('');
     if (loading) {
         return (
@@ -68,39 +68,12 @@ function SearchResults({ searchTerm, searchType, results, loading, onBookClick, 
                     <div className="w-full max-w-2xl mx-auto relative group">
                         <div className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-orange-600 rounded-lg blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
                         <div className="relative flex items-center bg-[#f5f5f4] rounded-lg shadow-2xl overflow-hidden p-1">
-                            {/* Seletor de tipo de busca */}
-                            <div className="flex items-center gap-1 px-2 border-r border-[#d6d3d1]">
-                                <button
-                                    onClick={() => onSearchTypeChange('title')}
-                                    className={`px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-1 ${
-                                        searchType === 'title'
-                                            ? 'bg-[#1c1917] text-[#e7e5e4]'
-                                            : 'text-[#78716c] hover:text-[#1c1917]'
-                                    }`}
-                                    title="Buscar por título"
-                                >
-                                    <BookOpen className="w-3 h-3" />
-                                    <span>Título</span>
-                                </button>
-                                <button
-                                    onClick={() => onSearchTypeChange('author')}
-                                    className={`px-3 py-2 rounded text-xs font-medium transition-colors flex items-center gap-1 ${
-                                        searchType === 'author'
-                                            ? 'bg-[#1c1917] text-[#e7e5e4]'
-                                            : 'text-[#78716c] hover:text-[#1c1917]'
-                                    }`}
-                                    title="Buscar por autor"
-                                >
-                                    <User className="w-3 h-3" />
-                                    <span>Autor</span>
-                                </button>
-                            </div>
                             <div className="pl-4 text-[#78716c]">
                                 <Search className="w-5 h-5" />
                             </div>
                             <input 
                                 type="text"
-                                placeholder={searchType === 'title' ? 'Busque por título do livro...' : 'Busque por nome do autor...'}
+                                placeholder="Busque por título, autor ou assunto..."
                                 className="w-full p-4 bg-transparent text-[#1c1917] placeholder-[#78716c] focus:outline-none text-lg font-serif"
                                 value={newSearchTerm}
                                 onChange={(e) => setNewSearchTerm(e.target.value)}
